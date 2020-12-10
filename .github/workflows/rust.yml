@@ -1,0 +1,31 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install latest nightly
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        override: true
+        target: thumbv6m-none-eabi
+    - name: Copy config.toml
+      run: cp -r firmware/.cargo .
+    - name: Build
+      uses: actions-rs/cargo@v1
+      with:
+        command: build 
+        args: --manifest-path firmware/Cargo.toml --target thumbv6m-none-eabi
