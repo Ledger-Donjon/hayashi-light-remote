@@ -27,7 +27,7 @@ class HyshLR:
         if dev is None:
             possible_ports = []
             for port in serial.tools.list_ports.comports():
-                if port.description.lower() == "hayashi-light-remote":
+                if port.product == "hayashi-light-remote":
                     possible_ports.append(port)
             if len(possible_ports) > 1:
                 raise RuntimeError("multiple dongle found")
