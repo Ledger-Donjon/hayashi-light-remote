@@ -102,7 +102,6 @@ class HyshLR:
             raise ValueError("intensity value out of range")
         frame = bytearray(b"\x03")
         value_code = int(value * 0b111111111111) << 2
-        print('CODE', value_code)
         frame += value_code.to_bytes(2, 'big')
         self.ser.write(frame)
         res = self.ser.read(1)
