@@ -21,7 +21,7 @@ class HyshLR:
         25%.
         """
         self.ser = None
-        self.__lamp = None
+        self.__lamp_cache = None
         self.__intensity_cache = None
         self.connect(dev)
 
@@ -47,37 +47,53 @@ class HyshLR:
             else:
                 raise NoDongleError()
         self.ser = serial.Serial(dev, 9600)
-        self.lamp = False
-        self.intensity = 0.25
 
     @assert_connected
     def disconnect(self):
         """ Disconnect from the serial port. """
         self.__assert_connected()
+        self.__lamp_cache = None
+        self.__intensity_cache = None
 
     @property
     @assert_connected
     def lamp(self):
         """ Lamp state: True to turn On, False to turn Off. """
-        return self.__lamp
+        if self.__lamp_cache is None:
+            # Query from device
+            self.ser.write(b"\x04")
+            res = self.ser.read(2)
+            assert res[0] == 0x04
+            assert res[1] in (0, 1)
+            self.__lamp_cache = res[1]
+        return self.__lamp_cache
 
     @lamp.setter
     @assert_connected
     def lamp(self, value: bool):
         if type(value) is not bool:
             raise ValueError("expected a bool")
-        if value != self.__lamp:
+        if value != self.__lamp_cache:
             frame = bytearray(b"\x02")
             frame.append(int(value))
             self.ser.write(frame)
             res = self.ser.read(1)
             if res != b"\x02":
                 raise RuntimeError("invalid response from dongle")
-            self.__lamp = value
+            self.__lamp_cache = bool(value)
 
     @property
     def intensity(self):
         """ Lamp intensity, from 0 to 1. """
+        if self.__intensity_cache is None:
+            # Query from device
+            self.ser.write(b"\x05")
+            res = self.ser.read(3)
+            assert res[0] == 0x05
+            value = int.from_bytes(res[1:], "big", signed=False)
+            value = (value >> 2) / 0b111111111111
+            assert (value >= 0) and (value <= 1)
+            self.__intensity_cache = value
         return self.__intensity_cache
 
     @intensity.setter

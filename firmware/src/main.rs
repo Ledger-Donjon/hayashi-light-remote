@@ -282,8 +282,11 @@ pub extern "C" fn _start() -> ! {
         .dff().set_bit()
         .cpha().set_bit() });
 
-    set_led(&peripherals, false);
-    set_lamp(&peripherals, false);
+    let mut lamp_state = false;
+    let mut lamp_intensity = 0u16;
+    set_led(&peripherals, lamp_state);
+    set_lamp(&peripherals, lamp_state);
+    spi1_tx_u16(&peripherals, lamp_intensity);
     // Give some time for the FT232 to boot-up.
     delay_ms(500);
 
@@ -298,17 +301,27 @@ pub extern "C" fn _start() -> ! {
             }
             // Switch light On/Off
             0x02 => {
-                let value = usart1_rx();
-                assert!(value <= 1);
-                set_lamp(&peripherals, value != 0);
-                set_led(&peripherals, value != 0);
+                lamp_state = usart1_rx() != 0;
+                set_lamp(&peripherals, lamp_state);
+                set_led(&peripherals, lamp_state);
                 usart1_tx(&peripherals, command_byte);
             }
             // Set light power (control the DAC)
             0x03 => {
-                let value = usart1_rx_u16();
-                spi1_tx_u16(&peripherals, value);
+                lamp_intensity = usart1_rx_u16();
+                spi1_tx_u16(&peripherals, lamp_intensity);
                 usart1_tx(&peripherals, command_byte);
+            }
+            // Get lamp state
+            0x04 => {
+                usart1_tx(&peripherals, command_byte);
+                usart1_tx(&peripherals, lamp_state as u8);
+            }
+            // Get lamp intensity
+            0x05 => {
+                usart1_tx(&peripherals, command_byte);
+                usart1_tx(&peripherals, (lamp_intensity >> 8) as u8);
+                usart1_tx(&peripherals, (lamp_intensity & 0xff) as u8);
             }
             _ => {
                 // Unknown command. Panic!
