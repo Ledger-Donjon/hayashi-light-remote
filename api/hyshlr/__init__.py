@@ -10,8 +10,13 @@ def assert_connected(f):
 
 class HyshLR:
     def __init__(self, dev=None):
+        """
+        Connect to dongle, turn off the lamp by default and set intensity to
+        25%.
+        """
         self.ser = None
         self.__lamp = None
+        self.__intensity_cache = None
         self.connect(dev)
 
     def connect(self, dev=None):
@@ -37,6 +42,7 @@ class HyshLR:
                 raise RuntimeError("no dongle found");
         self.ser = serial.Serial(dev, 9600)
         self.lamp = False
+        self.intensity = 0.25
 
     @assert_connected
     def disconnect(self):
@@ -64,14 +70,14 @@ class HyshLR:
             self.__lamp = value
 
     @property
-    def power(self):
-        """ Lamp power, from 0 to 1. """
-        return self.__power_cache
+    def intensity(self):
+        """ Lamp intensity, from 0 to 1. """
+        return self.__intensity_cache
 
-    @power.setter
-    def power(self, value: float):
+    @intensity.setter
+    def intensity(self, value: float):
         if (value < 0) or (value > 1):
-            raise ValueError("power value out of range")
+            raise ValueError("intensity value out of range")
         frame = bytearray(b"\x03")
         value_code = int(value * 0b111111111111) << 2
         print('CODE', value_code)
@@ -80,4 +86,4 @@ class HyshLR:
         res = self.ser.read(1)
         if res != b"\x03":
             raise RuntimeError("invalid response from dongle")
-        self.__power_cache = value
+        self.__intensity_cache = value

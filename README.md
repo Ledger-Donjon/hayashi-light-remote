@@ -19,7 +19,7 @@ import hyshlr
 
 device = hyshlr.HyshLR()
 device.lamp = True
-device.power = 0.5
+device.intensity = 0.5
 ```
 
 # External documentation
