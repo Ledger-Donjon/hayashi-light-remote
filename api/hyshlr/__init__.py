@@ -1,6 +1,12 @@
 import serial
 import serial.tools.list_ports
 
+class NoDongleError(Exception):
+    pass
+
+class MultipleDongleError(Exception):
+    pass
+
 def assert_connected(f):
     def g(self, *args, **kwargs):
         if self.ser is None:
@@ -35,11 +41,11 @@ class HyshLR:
                 if port.product == "hayashi-light-remote":
                     possible_ports.append(port)
             if len(possible_ports) > 1:
-                raise RuntimeError("multiple dongle found")
+                raise MultipleDongleError()
             elif len(possible_ports) == 1:
                 dev = possible_ports[0].device
             else:
-                raise RuntimeError("no dongle found");
+                raise NoDongleError()
         self.ser = serial.Serial(dev, 9600)
         self.lamp = False
         self.intensity = 0.25
