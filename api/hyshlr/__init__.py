@@ -51,7 +51,8 @@ class HyshLR:
     @assert_connected
     def disconnect(self):
         """ Disconnect from the serial port. """
-        self.__assert_connected()
+        self.ser.close()
+        self.ser = None
         self.__lamp_cache = None
         self.__intensity_cache = None
 
