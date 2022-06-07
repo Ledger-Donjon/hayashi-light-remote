@@ -109,3 +109,11 @@ class HyshLR:
         if res != b"\x03":
             raise RuntimeError("invalid response from dongle")
         self.__intensity_cache = value
+
+    @property
+    def burnout(self) -> bool:
+        self.ser.write(b"\x06")
+        res = self.ser.read(2)
+        assert res[0] == 0x06
+        assert res[1] in range(2)
+        return bool(res[1])

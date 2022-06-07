@@ -97,6 +97,11 @@ fn set_lamp(peripherals: &stm32f215::Peripherals, state: bool) {
     peripherals.GPIOA.odr.modify(|_, w| { w.odr1().bit(!state) });
 }
 
+/// Return true if lamp is dead
+fn lamp_burnout(peripherals: &stm32f215::Peripherals) -> bool {
+    !peripherals.GPIOA.idr.read().idr0().bit()
+}
+
 /// Approximated delay function. Precise enought for what we need to do...
 #[inline(never)]
 fn delay_ms(duration: u32) {
@@ -322,6 +327,11 @@ pub extern "C" fn _start() -> ! {
                 usart1_tx(&peripherals, command_byte);
                 usart1_tx(&peripherals, (lamp_intensity >> 8) as u8);
                 usart1_tx(&peripherals, (lamp_intensity & 0xff) as u8);
+            }
+            // Get lamp burnout indication
+            0x06 => {
+                usart1_tx(&peripherals, command_byte);
+                usart1_tx(&peripherals, if lamp_burnout(&peripherals) { 1 } else { 0 });
             }
             _ => {
                 // Unknown command. Panic!
