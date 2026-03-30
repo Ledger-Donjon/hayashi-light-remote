@@ -9,8 +9,7 @@ from .errors import NoDongleError, MultipleDongleError
 class HyshLR:
     def __init__(self, dev: str | None = None) -> None:
         """
-        Connect to dongle, turn off the lamp by default and set intensity to
-        25%.
+        Connect to dongle.
         """
         self.ser: serial.Serial | None = None
         self.__lamp_cache: bool | None = None
