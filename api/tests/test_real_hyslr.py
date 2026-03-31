@@ -13,7 +13,6 @@ def hyshlr_real() -> Generator[HyshLR, None, None]:
     """
     try:
         h = HyshLR()
-        h.connect()
         yield h
         h.disconnect()
     except NoDongleError:
@@ -36,7 +35,7 @@ def test_lamp_state(hyshlr_real: HyshLR):
     orig = h.lamp
     for led_value in [not orig, orig]:
         h.lamp = led_value
-        time.sleep(0.1)
+        time.sleep(1)
         assert h.lamp == led_value
 
 
@@ -44,7 +43,11 @@ def test_intensity(hyshlr_real: HyshLR):
     """Test setting the intensity on the real device."""
     h = hyshlr_real
     orig = h.intensity
-    for intensity_value in [orig - 0.1, orig + 0.1]:
-        h.intensity = intensity_value
-        time.sleep(0.1)
-        assert h.intensity == intensity_value
+    for intensity_value in range(0, 101, 10):
+        h.intensity = intensity_value / 100
+        time.sleep(0.5)
+        assert abs(h.intensity - intensity_value / 100) < 0.01
+
+    h.intensity = orig
+    time.sleep(0.5)
+    assert abs(h.intensity - orig) < 0.01
